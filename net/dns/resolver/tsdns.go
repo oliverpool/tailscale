@@ -644,6 +644,14 @@ func (r *Resolver) resolveLocalReverse(name dnsname.FQDN) (dnsname.FQDN, dns.RCo
 		return "", dns.RCodeRefused
 	}
 
+	// If someone curiously does a reverse lookup on the DNS IP, we
+	// return a domain that helps indicate that Tailscale is using
+	// this IP for a special purpose and it is not a node on their
+	// tailnet.
+	if ip == tsaddr.TailscaleServiceIP() || ip == tsaddr.TailscaleServiceIPv6() {
+		return "nodedns.tailscale-internals.", dns.RCodeSuccess
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	ret, ok := r.ipToHost[ip]
